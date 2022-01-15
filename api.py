@@ -7,39 +7,67 @@ import socket
 """
 VARIABLES EN COMMUN
 """
-threadsClients = []
-info = []
+client = None
 
 """
 GESTION DES RASPBERRY
 """
 
-def envoiMessage(client, nom):
-    client.send(nom.encode("utf-8"))
+"""
+FONCTION UTILE
+"""
+
+def envoiMessage(client, message):
+    client.send(message.encode("utf-8"))
 
 
-def demandeInfo(client, info):
-    if info[0] == "tmp":
-        client.send(info[0].encode("utf-8"))
-        info[0] = client.recv(255)
-        info[0].decode("utf-8")
-    
+
+"""
+RECEPTION DES DONNÉES DU RESPBERRY
+"""
 
 def serveur():
+    print("Starting server ...")
     serveur = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serveur.bind(('', 5575))
     serveur.listen(5)
 
+    client, infosClient = serveur.accept()
+    print("New incoming connection...")
+
     while True:
-        client, infosClient = serveur.accept()
-        threadsClients.append((client, infosClient))
+        message = client.recv(255)
+        message = message.decode("utf-8")
+        print(message)
 
     serveur.close()
 
-
+# Création du serveur où le raspberry se connecte
 socketServeur = threading.Thread(None, serveur, None, (), {})
 socketServeur.start()
 
+
+
+"""
+ENVOIE DES DONNÉES AU RESPBERRY
+"""
+
+raspberryIP = "192.168.1.82"	# Ici, le poste local
+raspberryPort = 5575	# Se connecter sur le port 50000
+
+print("Trying to connect to {raspberryIP}:{raspberryPort} ...")
+
+flag = True
+raspberry = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+while flag:
+    try:
+        raspberry.connect((raspberryIP, raspberryPort))
+        flag = False
+    except:
+        print("raspberry's server don't running !")
+        time.sleep(2)
+
+print("Connected to raspberry !")
 
 
 """
@@ -53,26 +81,6 @@ async def root():
     return {"root"}
 
 
-@app.get("/{ip}/infotemp")
-async def root(ip):
-    global info
-    for i in range(len(threadsClients)):
-        if threadsClients[i][1][0] == ip:
-            client = threadsClients[i][0]
-            info[0] = "tmp"
-            thread = threading.Thread(None, demandeInfo, None, (client, info), {})
-            thread.start()
-            thread.join()
-        
-    return {info[0]}
-
-
-@app.get("/{ip}/{nom}")
-async def test(ip, nom):
-    for i in range(len(threadsClients)):
-        if threadsClients[i][1][0] == ip:
-            client = threadsClients[i][0]
-            thread = threading.Thread(None, envoiMessage, None, (client, nom), {}) 
-            thread.start()
-        
-    return {"OK"}
+@app.get("/test")
+async def test():
+    envoiMessage(raspberry, "01:00")
