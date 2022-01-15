@@ -8,7 +8,7 @@ from request import *
 """
 VARIABLES EN COMMUN
 """
-info = {}
+info_Raspberry = {}
 raspberry = None
 
 """
@@ -30,14 +30,12 @@ def processRequest(request):
     if data["switch1"] == "on":
         envoiMessage(raspberry, "1:1")
     else:
-        print(f"switch1 : {data['switch1']}")
         envoiMessage(raspberry, "1:0")
 
     time.sleep(0.08)
 
     # Switch 2 (GREEN)
     if data["switch2"] == "on":
-        print(f"switch2 : {data['switch2']}")
         envoiMessage(raspberry, "2:1")
     else:
         envoiMessage(raspberry, "2:0")
@@ -48,25 +46,21 @@ def processRequest(request):
     if data["switch3"] == "on":
         envoiMessage(raspberry, "3:1")
     else:
-        print(f"switch3 : {data['switch3']}")
         envoiMessage(raspberry, "3:0")
 
     time.sleep(0.08)
 
     # Range 1
     envoiMessage(raspberry, f"04:{data['range1']}")
-    print(f"04:{data['range1']}")
-    time.sleep(1)
+    time.sleep(0.08)
 
     # Range 2
     envoiMessage(raspberry, f"05:{data['range2']}")
-    print(f"05:{data['range2']}")
-    time.sleep(0.1)
+    time.sleep(0.08)
 
     # Range 3
     envoiMessage(raspberry, f"06:{data['range3']}")
-    print(f"06:{data['range3']}")
-    time.sleep(0.1)
+    time.sleep(0.08)
 
     # Range 4
     envoiMessage(raspberry, f"10:{data['range4']}")
@@ -90,13 +84,8 @@ def serveur():
         message = message.decode("utf-8")
 
         message_content = message.split(":")
-
-        # info[type(message_content[0])] = message_content[1]
-        # if message_content[0] == "09":
-        #     info["09"] = message_content[1]
-        # elif message_content[0] == "07":
-        #     info["07"] = message_content[1]  
-            
+        info_Raspberry[message_content[0]] = message_content[1]
+        
         print("{message} is processed...")
 
     serveur.close()
@@ -135,32 +124,15 @@ FONCTION DE L'API
 
 app = FastAPI()
 
+# Requête pour information des capteurs
 @app.get("/infos")
 async def infos():
-    pass
+    print(info_Raspberry)
+    return {"temperature": info_Raspberry['07'], "distance": info_Raspberry['09'], "humidite": info_Raspberry['08']}
 
 
+# Requête à communiquer au raspeberry
 @app.post("/")
 async def request(request: Request):
     processRequest(request)
-    return request
-
-"""
-FONCTION DE TEST
-"""
-
-@app.get("/")
-async def root():
-    return {"root"}
-
-
-@app.get("/test")
-async def test():
-    envoiMessage(raspberry, "01:00")
-
-
-@app.get("/info")
-async def info():
-    message = "09 : " + str(info["09"])
-    return {message}
-
+    return {"message": "La requête à bien été effectuée.."}
