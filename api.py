@@ -12,10 +12,6 @@ info_Raspberry = {}
 raspberry = None
 
 """
-GESTION DES RASPBERRY
-"""
-
-"""
 FONCTION UTILE
 """
 
@@ -86,7 +82,7 @@ def serveur():
         message_content = message.split(":")
         info_Raspberry[message_content[0]] = message_content[1]
         
-        print("{message} is processed...")
+        print(f"{message} is processed...")
 
     serveur.close()
 
@@ -103,7 +99,7 @@ ENVOIE DES DONNÉES AU RESPBERRY
 raspberryIP = "192.168.1.82"	# Ici, le poste local
 raspberryPort = 5575	# Se connecter sur le port 50000
 
-print("Trying to connect to {raspberryIP}:{raspberryPort} ...")
+print(f"Trying to connect to {raspberryIP}:{raspberryPort} ...")
 
 flag = True
 raspberry = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -127,7 +123,6 @@ app = FastAPI()
 # Requête pour information des capteurs
 @app.get("/infos")
 async def infos():
-    print(info_Raspberry)
     return {"temperature": info_Raspberry['07'], "distance": info_Raspberry['09'], "humidite": info_Raspberry['08']}
 
 
